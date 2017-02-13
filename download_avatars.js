@@ -1,11 +1,15 @@
+require('dotenv').config();
+var request = require("request");
+var fs = require('fs');
+
 if(!process.argv[3]){
   throw new Error('2 arguments required');  // Checks if there are 2 arguments from the command line
 }
 
-var request = require("request");
-var fs = require('fs');
-var GITHUB_USER = 'bernardofcs';
-var GITHUB_TOKEN = '868e404fd7917d1db463515c8a803c39ee6556d5';
+
+var GITHUB_USER = process.env.GITHUB_USER;
+var GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+
 
 function downloadImageByURL(url, filePath) { //downloads an image and saves to a path
   request.get(url)
