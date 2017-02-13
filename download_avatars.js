@@ -12,12 +12,22 @@ function getRepoContributors(repoOwner, repoName, cb) {
       'User-Agent': 'GitHuv Avatar Downloader - Student Project'
     }
   }
-  request(options, cb);
+  request.get(options, function(error, response, body){
+    var obj = JSON.parse(body);
+    cb(error, obj);
+  })
+  .on('error', function(err) {
+    console.log(err)
+  });
 }
 
-getRepoContributors('jquery', 'jquery', function(error, response, body){
-  console.log(response.statusCode);
-    if(!error && response.statusCode === 200){
-      console.log(body)
-    }
+getRepoContributors('jquery', 'jquery', function(err, result){
+  console.log('Errors: ' + err);
+  console.log('Result: ' + result);
+  for(var user of result){
+    console.log(user['avatar_url']);
+  }
+  // forEach(var avatar_url in result){
+  //   console.log('hello')
+  // }
 })
