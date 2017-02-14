@@ -26,18 +26,11 @@ function getStarredRepos(url, cb){
     var obj = JSON.parse(body);
     var starred = [];
     for(var repo of obj){
-      var repoName = repo['id'];
-      if(!starred[repoName]){
-        //starred[repoName] = {name: repoName, count: 1}
-        starred.push({name: repoName, count: 1});
-      }else{
-        starred[repoName]['count'] += 1;
-      }
+      var repoName = repo['full_name'];
+      starred.push(repoName);
     }
 
     cb(error, starred);
-    //console.log(obj);
-    //cb(error, obj);
   })
   .on('error', function(err){
     throw err;
@@ -59,6 +52,8 @@ function getRepoContributors(repoOwner, repoName, cb) { // gets the list of avat
   })
   .on('error', function(err) {
     throw err;
+  })
+  .on('end', function(){
   });
 }
 
@@ -75,29 +70,10 @@ function checkEnvInfo(){
   }
 }
 
-var mostStarred = [];
 if(process.argv.length === 4){ // Checks if there are 2 arguments from the command line
   if(checkEnv){                // Checks if .env file exists
     if(checkEnvInfo){          // Checks if .env file has github user and token
-      getRepoContributors(process.argv[2], process.argv[3], function(err, result){ //main program flow
-        var count = 0;
-        for(var user of result){
-          var starCount = 0;
-          var arrMostStarred = getStarredRepos(user['starred_url'], function(err2, starred){
-            console.log(starred);
-            for(var repo in starred){
-              var repoName = starred[repo];
-              if(!mostStarred[repoName]){
-                mostStarred[repoName] = {name: repoName, count: 1};
-              }else{
-                mostStarred[repoName]['count'] += 1;
-              }
-            }
-            console.log(mostStarred);
-          });
-        }
-        //console.log(mostStarred)
-      });
+
     }else{
       console.log('.env file is missing information.');
     }
@@ -107,3 +83,68 @@ if(process.argv.length === 4){ // Checks if there are 2 arguments from the comma
 }else{
   console.log('Exactly 2 arguments are required: GitHub User and Repo Name');
 }
+
+var m = 0;
+getRepoContributors(process.argv[2], process.argv[3], function(err, result){ //main program flow
+  var mostStarred = [];
+  for(var j = 0; j < result.length; j++){
+    getStarredRepos(result[j]['starred_url'], function(err2, starred){
+      m++;
+      for(var i = 0; i < starred.length; i++){
+        mostStarred.push(starred[i]);
+      }
+      if(m === result.length){
+       calculate(mostStarred);
+      }
+    });
+  }
+});
+
+function calculate(arr){         //calculates the top 5 starred repos
+  var a = [], b = [], prev;
+  var countStar = [];
+  arr.sort();
+  for(var i = 0; i < arr.length; i++){
+      if ( arr[i] !== prev ) {
+          a.push(arr[i]);
+          b.push(1);
+      } else {
+          b[b.length-1]++;
+      }
+      prev = arr[i];
+  }
+
+  for(var m = 1; m < a.length; m++){
+    var obj = {name: a[m], count: b[m]};
+    countStar.push(obj);
+  }
+
+  countStar.sort(function(a, b){
+    if(a.count < b.count){
+      return 1;
+    }
+    if(a.count > b.count){
+      return -1;
+    }
+    return 0;
+  });
+  var mostStarred = countStar.slice(0, 5);
+  console.log('Most starred repos: ');
+  console.log(mostStarred);
+}
+
+function transformArr(orig) { //
+  var newArr = [],
+  counts = {},
+  i, j, cur;
+  for (i = 0, j = orig.length; i < j; i++) {
+    cur = orig[i];
+    if (!(cur.count in counts)) {
+      counts[cur.count] = {count: cur.t, names: []};
+      newArr.push(counts[cur.count]);
+    }
+      counts[cur.count].names.push(cur.name);
+  }
+  return newArr;
+}
+
